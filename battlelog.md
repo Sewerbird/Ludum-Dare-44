@@ -145,6 +145,44 @@ State: {
 
 ## Log
 
+### T+22:40 (18:45)
+
+Definitely hitting a hump in motivation. BUT! I have actually gotten a fair amount done i the past two hours. Not only does the player shoot bullets, the shooting is done according to a refractory-period timer. Further, the bullets hit Enemies, and the Enemies have life totals that get depleted by being hit, finally being removed from the board when they hit zero. Also, I have it set up so that you 'complete the level' after 10 seconds of survival, whereupon the game changes to the "Interstitial Scene" state. This puts me in a prime position to ask the player how much of their life bar they want to bid for their next level, and allow the purchasing of upgrades. My first task will be to do the former feature, since without it my game doesn't follow the theme of the game jam at all.
+
+I have made a promise to myself that today, Saturday, will be the last day I do essential gameplay code, reserving Sunday for creating visual assets and sounds. At this juncture, I'm not very confident in the level of polish it'll have at the 48 hour mark, but I'm reasonably confident I'll have a playable, winnable, game. The main risk at this point is having any upgrades to buy with the bid life....
+
+### T+20:20 (16:20)
+
+Progress has been a bit sedate through the afternoon. went on a nature walk. Colonel the Cat has been annoying me a lot too, so been hanging out with him more than I ought. I got projectiles going, but I need to have them get cleaned up once off screen.
+
+http://www.giphy.com/gifs/cP4xnR0n8Oh4bxZXOI
+
+### T+16:45 (12:45)
+
+This is always the hardest part of the LDJam for me, but it means I'm about 5 hours from the game looking much nicer once I've had time to add assets. Core gameplay done: life bars, collision, invulnerability period after hit:
+
+http://www.giphy.com/gifs/LmCTopL1Zql275ZHwG
+
+### T+16:30 (11:30)
+
+Had my brother over as a guest and got some sandwiches for lunch. The enemies delete correctly, and now I am setting it up for them to randomly spawn on the top of the screen at a fixed interval.
+
+### T+14:20 (09:20)
+
+Suffering a bit of heart palpitations because I forgot to take my beta blocker last night, so mostly napping and thinking. I've gotten the players to move according to `dt`, so now implementing logic to delete the enemy when it goes too far beneath the screen, and to randomly spawn new ones up top.
+
+### T+12:20 (07:20)
+
+Sleep? Check! Shower? Check! Bacon? Check! Time to resume. I'm gonna get the enemies to move according to timed schedules down the screen. I'll be able to reuse much of that code for moving projectiles afterwards and I'll be nearly arrived at being a "shooter".
+
+### T+3:50 (23:55)
+
+A fair amount done in the past 90 minutes. I've created enemy circles that can be manually moved down the screen with the "W" and "S" keys. I also implemented a many-to-one circle collision function, and addeded 'player collided with' to the game state: the background dims when the player is being intersected. This is very close to my goal from two and a half hours ago, so I think I have adequately stuck to schedule.
+
+I need to automatically spawn enemies according to a schedule, and have them fall down the screen, for it to feel more game-like, but honestly I'm super tired and well past my typical bed time. I'm gonna finish off my beer and head to bed, hopefully waking up full of vigor in the morning at T+10:50 (7:00).
+
+http://www.giphy.com/gifs/U1V3l9FiQVciUIwPtZ
+
 ### T+2:25 (22:25)
 
 I've gotten the circle to be clamped to the edges of the screen. Further, I've refactored the drawing logic so that it is now 'drawing a player' instead of directly drawing a circle: an indirection that will let me draw enemies by very similar channels! I'm giving myself another hour to get enemies falling down the screen.
