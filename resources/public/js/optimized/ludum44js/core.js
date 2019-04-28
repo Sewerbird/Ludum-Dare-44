@@ -19,12 +19,20 @@ return ((x__4219__auto__ > y__4220__auto__) ? x__4219__auto__ : y__4220__auto__)
 });
 ludum44js.core.motion_sensitivity = 15.0;
 ludum44js.core.current_scene = cljs.core.atom.cljs$core$IFn$_invoke$arity$1(cljs.core.cst$kw$GAME);
-ludum44js.core.setup = (function ludum44js$core$setup(){
-ludum44js.core.kill_line = (1.25 * quil.core.height());
-
-quil.core.frame_rate((30));
-
-quil.core.color_mode.cljs$core$IFn$_invoke$arity$1(cljs.core.cst$kw$hsb);
-
-return new cljs.core.PersistentArrayMap(null, 6, [cljs.core.cst$kw$frame_count,(0),cljs.core.cst$kw$last_spawn,(0),cljs.core.cst$kw$player_is_hit_QMARK_,false,cljs.core.cst$kw$player,cljs.core.PersistentHashMap.fromArrays([cljs.core.cst$kw$invulnerability_timer,cljs.core.cst$kw$life_bid,cljs.core.cst$kw$color,cljs.core.cst$kw$radius,cljs.core.cst$kw$life,cljs.core.cst$kw$y_offset,cljs.core.cst$kw$shot_timer,cljs.core.cst$kw$x_offset,cljs.core.cst$kw$shot_period,cljs.core.cst$kw$life_in_escrow],[(0),(0),(0),(50),(10),(quil.core.height() * 0.9),0.001,(quil.core.width() * 0.5),0.001,(0)]),cljs.core.cst$kw$enemies,cljs.core.PersistentVector.EMPTY,cljs.core.cst$kw$projectiles,cljs.core.PersistentVector.EMPTY], null);
+ludum44js.core.current_level = cljs.core.atom.cljs$core$IFn$_invoke$arity$1((1));
+ludum44js.core.prior_bet_bid = cljs.core.atom.cljs$core$IFn$_invoke$arity$1((0));
+ludum44js.core.prior_bet_rate = cljs.core.atom.cljs$core$IFn$_invoke$arity$1((0));
+ludum44js.core.prior_balance = cljs.core.atom.cljs$core$IFn$_invoke$arity$1((10));
+ludum44js.core.current_bet_bid = cljs.core.atom.cljs$core$IFn$_invoke$arity$1((5));
+ludum44js.core.current_bet_rate = cljs.core.atom.cljs$core$IFn$_invoke$arity$1((5));
+ludum44js.core.current_balance = cljs.core.atom.cljs$core$IFn$_invoke$arity$1((10));
+ludum44js.core.load_image = (function ludum44js$core$load_image(image){
+var path = ["/scripts/public/",cljs.core.name(image),".png"].join('');
+return quil.core.load_image(path);
+});
+ludum44js.core.draw_image = (function ludum44js$core$draw_image(state,k,p__21391){
+var vec__21392 = p__21391;
+var x = cljs.core.nth.cljs$core$IFn$_invoke$arity$3(vec__21392,(0),null);
+var y = cljs.core.nth.cljs$core$IFn$_invoke$arity$3(vec__21392,(1),null);
+return quil.core.image.cljs$core$IFn$_invoke$arity$3(cljs.core.get_in.cljs$core$IFn$_invoke$arity$2(state,new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [cljs.core.cst$kw$images,k], null)),x,y);
 });

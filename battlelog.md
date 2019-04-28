@@ -110,29 +110,29 @@ State: {
   - [ ] Allow bid meter to be changed
   - [ ] Allow displayed upgrades to be selectable
   - [ ] Allow quit -> Intro Scene
-  - [ ] Allow begin -> Game Scene
+  - [ ] Allow continue -> Game Scene
 * Game Scene
   - [ ] Draw Board
     - [ ] Draw background
     - [ ] Draw player
     - [ ] Draw player life bar
     - [ ] Draw enemies
-  - [ ] Interact
-    - [ ] Get player input
-    - [ ] Apply player motion
-    - [ ] Create player projectiles
-  - [ ] Enemies
-    - [ ] Spawn new enemies according to schedule
-    - [ ] Generate enemy inputs
-    - [ ] Apply enemy motion
-    - [ ] Create enemy projectiles
+  - [x] Interact
+    - [x] Get player input
+    - [x] Apply player motion
+    - [x] Create player projectiles
+  - [x] Enemies
+    - [x] Spawn new enemies according to schedule
+    - [H] Generate enemy inputs
+    - [x] Apply enemy motion
+    - [H] Create enemy projectiles
   - [ ] Resolve
-    - [ ] Compute collisions
-    - [ ] Apply damage to player
+    - [x] Compute collisions
+    - [x] Apply damage to player
     - [ ] Check lose condition
-    - [ ] Apply damage to enemies
+    - [x] Apply damage to enemies
     - [ ] Check win condition
-  - [ ] Allow win -> Interstitial Scene
+  - [x] Allow win -> Interstitial Scene
   - [ ] Allow death -> Death Scene
 * Death Scene
   - [ ] Display Game Over
@@ -144,6 +144,30 @@ State: {
   - [ ] Allow continue -> Intro Scene
 
 ## Log
+
+### T+27:45 (23:15)
+
+Oh dear. I stubbed out some functions I'll need, and played with making the game a sidescroller but decided against it. I should perhaps have stopped an hour ago and used the time to recharge rather than pushing myself to try to get more done. That said, I have a plan in the morning:
+
+- [ ] Draw out the interstitial menu in Affinity Designer
+- [ ] Chop it up and import it into my project
+- [ ] Highlight rectangles on keypress based on the key (on-screen stuff is controlled with key bindings)
+- [ ] Perform the actions of the buttons on keyup
+- [ ] Map the Player object for shop buttons
+- [ ] `swap!` betting options for bid buttons
+- [ ] Show a different sprite for each X value of lifebar in the bid. Just have 10 variants of the image in affinity designer
+- [ ] Start next level
+- [ ] Quit game
+
+### T+26:00 (22:00)
+
+I kind of want to curl up in a ball and die right now. I've managed to set up image loading, and have been roughing out the state backing up the life-betting system. I am gonna try to get a fixed-aspect ratio UI ready by midnight, as well as keyboard commands to change the state. This should let me plug in assets tomorrow.
+
+### T+24:00 (20:00)
+
+It's been a whole day! The burnout is real, but I've started work on the interstitial menu. It's not interactive and doesn't represent real logic, but I'm hoping those fall into place pretty easily. I'm pretty sure I'm gonna have it be keyboard driven so that I don't have to write mouse-clicking code... I just can't muster it in myself to do anything more ornate.
+
+http://www.giphy.com/gifs/h7FUnEaHmxI0jK4St1
 
 ### T+22:40 (18:45)
 
