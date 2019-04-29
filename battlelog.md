@@ -145,6 +145,18 @@ State: {
 
 ## Log
 
+### T+43:30 (15:30)
+
+My game finally uses images, haha: behold the inter-level betting UI/store!
+
+http://www.giphy.com/gifs/fAc32GoThfyg0hzFXM
+
+I am now gonna work on having the interstitial screen set the appropriate parameters before returning to the next level, and accumulating money on completion.
+
+### T+36:30 (08:33)
+
+Colonel the Cat was being a total psycho last night, so despite waking up at 8, I don't feel very rested. I have church from 10:30 til noon, and so I'm hoping to get the assets for the game done within this 2 hour span before I have to leave. I'm gonna throw open affinity designer and get my wacom tablet out to do the job quickly.
+
 ### T+27:45 (23:15)
 
 Oh dear. I stubbed out some functions I'll need, and played with making the game a sidescroller but decided against it. I should perhaps have stopped an hour ago and used the time to recharge rather than pushing myself to try to get more done. That said, I have a plan in the morning:

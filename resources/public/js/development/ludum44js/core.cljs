@@ -10,22 +10,51 @@
 (def current_scene (atom :GAME))
 (def current_level (atom 1))
 (def prior_bet_bid (atom 0))
-(def prior_bet_rate (atom 0))
-(def prior_balance (atom 10))
 (def current_bet_bid (atom 5))
-(def current_bet_rate (atom 5))
-(def current_balance (atom 10))
+(def wallet_balance (atom 0))
+(def life_for_player (atom 10))
+(def time_now (atom 0))
+(def time_of_last_purchase (atom -10))
+(def time_of_last_bid_change (atom -10)) ;don't delay if they are real quick at beginning
+(def purchases (atom {
+        :fire_rate 0, 
+        :fire_spread 0, 
+        :vessel_size 0, 
+        :armor 0, 
+        :bullet_size 0, 
+        :bullet_speed 0
+}))
 
 (defn load-image [image]
-  (let [path (str "/scripts/public/" (name image) ".png")]
+  (let [path (str "/scripts/ld44/" (name image) ".png")]
+    (println "Loading" path)
     (q/load-image path)))
 
-(defn draw-image [state k [x y]]
+(defn load-font [font]
+  (let [path (str "/scripts/ld44/" (name font))]
+    (println "Loading" path)
+    (q/load-font path)))
+
+(defn draw-image [state k [x y] w h]
+  (println "Drawing image" k x y w h)
+  (if (or w h)
+    (let []
+      (println "Resizing to " w h)
+      (q/resize (get-in state [:images k]) w h)
+    )
+  )
   (q/image (get-in state [:images k]) x y))
 
-(def images [:test])
+(defn draw-text [state font message [x y]]
+  (q/text-font "Arial" 30)
+  (q/text message x y)
+)
+
+(def images [:bg :test "bid0" "bid1" "bid2" "bid3" "bid4" "bid5" "bid6" "bid7" "bid8" "bid9" :upgradepip :pew "baddie1" "baddie2" "baddie3" :player])
+(def fonts [:earthorbiteracad])
 (def ui_extents {
-  :bg [0 0 800 600]
+  :test [0 0 800 600]
+  :bg [0 0 600 800]
 })
 
 (defn setup []
@@ -46,12 +75,21 @@
     :player {
       :color 0
       :radius 50
+      :player_size 50
       :invulnerability_timer 0
       :shot_timer 0.500
       :shot_period 0.500
       :life 10
       :x_offset 100 ;;in percent
       :y_offset (* (q/height) 0.9) ;;in percent
+      :purchases {
+        :fire_rate 0, 
+        :fire_spread 0, 
+        :vessel_size 0, 
+        :armor 0, 
+        :bullet_size 0, 
+        :bullet_speed 0
+      }
       :upgrades {
         :fire_rate 1.00, 
         :fire_spread 1.00, 
@@ -70,7 +108,6 @@
   (let [timer (+ dt (:timer enemy))
         was_hit (count (check_collision enemy projectiles))
         ]
-    (if (< 0 was_hit) (println "I WAS HIT" was_hit) nil)
     {
      :cleanup (or (< (:x_offset enemy) -kill_line) (and (< 0 was_hit) (- (:life enemy) was_hit)))
      :timer timer
@@ -79,8 +116,9 @@
      :right_speed (:right_speed enemy)
      :y_offset (+ (:y_offset enemy) (* dt (:down_speed enemy)))
      :x_offset (+ (:x_offset enemy) (* dt (:right_speed enemy)))
-     :color (mod (+ (:color enemy) 0.7) 255)
+     :color 0
      :radius (:radius enemy)
+     :variant (:variant enemy)
     }
   )
 )
@@ -101,9 +139,35 @@
      :right_speed (:right_speed projectile)
      :x_offset (+ (:x_offset projectile) (* dt (:right_speed projectile)))
      :y_offset (+ (:y_offset projectile) (* dt (:down_speed projectile)))
-     :color (mod (+ (:color projectile) 0.7) 255)
+     :color 100
      :radius (:radius projectile)
     }
+  )
+)
+
+(defn reinitialize_player [player]
+  (let [new_player {
+            :color 180
+            :radius 50
+            :player_size (* 50 (/ 1 (max 1 (:vessel_size @purchases))))
+            :invulnerability_timer 0
+            :shot_timer 0.500
+            :shot_period 0.500
+            :life @life_for_player
+            :x_offset 100
+            :y_offset (* (q/height) 0.9)
+            :purchases @purchases
+            :upgrades {
+              :fire_rate (* 1.00 (/ 1 (:fire_rate @purchases)))
+              :fire_spread (+ (* 0.75 (:fire_spread @purchases)) 1.00)
+              :vessel_size (* (/ 1.0 (:vessel_size @purchases)) 1.00)
+              :armor (+ (* 0.3 (:armor @purchases)) 1.00)
+              :bullet_size (+ (* 0.2 (:bullet_size @purchases)) 1.00)
+              :bullet_speed (+ (* 0.5 (:bullet_speed @purchases)) 1.00)
+            }
+          }
+        ]
+    new_player
   )
 )
 
@@ -116,70 +180,82 @@
           "d" {
                :x_offset (clamp (+ (:x_offset player) motion_sensitivity) 0 (q/width)) 
                :y_offset (:y_offset player)
-               :color (mod (+ (:color player) 0.7) 255)
+               :color (:color player)
                :radius (:radius player)
+               :player_size (:player_size player)
                :invulnerability_timer (clamp (- inv dt) 0 100)
                :shot_timer (:shot_timer player)
                :shot_period (:shot_period player)
                :life (if took_damage (- (:life player) 1) (:life player))
                :upgrades (:upgrades player)
+               :purchases (:purchases player)
               }
           "a" {
                :x_offset (clamp (- (:x_offset player) motion_sensitivity) 0 (q/width))
                :y_offset (:y_offset player)
-               :color (mod (+ (:color player) 0.7) 255)
+               :color (:color player)
                :radius (:radius player)
+               :player_size (:player_size player)
                :invulnerability_timer (clamp (- inv dt) 0 100)
                :shot_timer (:shot_timer player)
                :shot_period (:shot_period player)
                :life (if took_damage (- (:life player) 1) (:life player))
                :upgrades (:upgrades player)
+               :purchases (:purchases player)
               }
           "s" {
                :y_offset (clamp (+ (:y_offset player) motion_sensitivity) 0 (q/height)) 
                :x_offset (:x_offset player)
-               :color (mod (+ (:color player) 0.7) 255)
+               :color (:color player)
                :radius (:radius player)
+               :player_size (:player_size player)
                :invulnerability_timer (clamp (- inv dt) 0 100)
                :shot_timer (:shot_timer player)
                :shot_period (:shot_period player)
                :life (if took_damage (- (:life player) 1) (:life player))
                :upgrades (:upgrades player)
+               :purchases (:purchases player)
               }
           "w" {
                :y_offset (clamp (- (:y_offset player) motion_sensitivity) 0 (q/height))
                :x_offset (:x_offset player)
-               :color (mod (+ (:color player) 0.7) 255)
+               :color (:color player)
                :radius (:radius player)
+               :player_size (:player_size player)
                :invulnerability_timer (clamp (- inv dt) 0 100)
                :shot_timer (:shot_timer player)
                :shot_period (:shot_period player)
                :life (if took_damage (- (:life player) 1) (:life player))
                :upgrades (:upgrades player)
+               :purchases (:purchases player)
               }
           {
             :x_offset (:x_offset player) 
             :y_offset (:y_offset player)
-            :color (mod (+ (:color player) 0.7) 255)
+            :color (:color player)
             :radius (:radius player)
+            :player_size (:player_size player)
             :invulnerability_timer (clamp (- inv dt) 0 100)
             :shot_timer (:shot_timer player)
             :shot_period (:shot_period player)
             :life (if took_damage (- (:life player) 1) (:life player))
             :upgrades (:upgrades player)
+            :purchases (:purchases player)
           }
         )
       )
       {
         :x_offset (:x_offset player) 
         :y_offset (:y_offset player)
-        :color (mod (+ (:color player) 0.7) 255)
+        :color (:color player)
         :radius (:radius player)
+        :player_size (:player_size player)
         :invulnerability_timer (clamp (- inv dt) 0 100)
         :shot_timer (:shot_timer player)
         :shot_period (:shot_period player)
         :life (if took_damage (- (:life player) 1) (:life player))
         :upgrades (:upgrades player)
+        :purchases (:purchases player)
       }
     )
   )
@@ -189,10 +265,12 @@
   "Does circle-to-circle collision check between tgt and all colliders. Returns collider(s), or nil"
   (filterv
     (fn [a]
-      (let [dx (- (:x_offset a) (:x_offset tgt))
+      (let [wa (if (:player_size a) (:player_size a) (:radius a))
+            wtgt (if (:player_size tgt) (:player_size tgt) (:radius tgt))
+            dx (- (:x_offset a) (:x_offset tgt))
             dy (- (:y_offset a) (:y_offset tgt))
             dd (Math/sqrt (+ (* dx dx) (* dy dy)))
-            r (+ (:radius a) (:radius tgt)) ]
+            r (+ wa wtgt) ]
         (< dd (/ r 2))
       )
     )
@@ -215,6 +293,7 @@
     :life 1
     :y_offset (* (q/height) 0)
     :x_offset (* (q/width) (q/random 1.0))
+    :variant 1
   }
 )
 
@@ -235,16 +314,18 @@
         :shot_timer (* (:shot_period player) (:fire_rate (:upgrades player))) ;;Intentional: sets timer to maximum period
         :color (:color player)
         :radius (:radius player)
+        :player_size (:player_size player)
         :invulnerability_timer (:invulnerability_timer player)
         :life (:life player)
         :projectiles (:projectiles player)
         :upgrades (:upgrades player)
+        :purchases (:purchases player)
      }
      :shots [{
               :x_offset (:x_offset player)
               :y_offset (- (:y_offset player) (:radius player))
               :down_speed (* -400 (:bullet_speed (:upgrades player)))
-              :right_speed (* (* (* 10 (- (q/random 2.0) 1)) (:bullet_speed (:upgrades player))) (:fire_spread (:upgrades player)))
+              :right_speed (* (* 10 (- (q/random 2.0) 1)) (:fire_spread (:upgrades player)))
               :radius (* 5 (:bullet_size (:upgrades player)))
               :cleanup false
               :duration 3
@@ -260,14 +341,28 @@
         :shot_timer (clamp (- (:shot_timer player) dt) 0 (:shot_period player))
         :color (:color player)
         :radius (:radius player)
+        :player_size (:player_size player)
         :invulnerability_timer (:invulnerability_timer player)
         :life (:life player)
         :projectiles (:projectiles player)
         :upgrades (:upgrades player)
+        :purchases (:purchases player)
      }
      :shots []
     }
   )
+)
+
+(defn over_update_draw_state [state dt]
+  (if (q/key-pressed?)
+    (let [dkey (q/raw-key)]
+      (case dkey
+        " " (*js "window.location.reload(false);" )
+        ""
+        )
+      )
+    )
+  state
 )
 
 (defn game_update_draw_state [state dt]
@@ -294,79 +389,140 @@
       :enemies new_enemies
       :projectiles (cleanup (into updated_projectiles new_player_projectiles))
       :images (:images state)
+      :fonts (:fonts state)
     }
   )
 )
 
 (defn interstitial_update_draw_state [state dt]
-    (println "interstitial draw state")
-  (let [ ]
+  (let [old_player (:player state)
+        new_player (reinitialize_player old_player)]
     (if (q/key-pressed?)
       (let [dkey (q/raw-key)]
         (case dkey
-          "a" (println "Increasing stakes") ;; increase stakes
-          "d" (println "Decreasing stakes") ;; decrease stakes
-          "1" (println "Buying fire rate") ;; purchase item 1, fire_rate upgrade
-          "2" (println "Buying fire spread") ;; purchase item 2, fire_spread upgrade
-          "3" (println "Buying armor") ;; purchase item 3, armor upgrade
-          "4" (println "Buying bullet size") ;; purchase item 4, bullet_size upgrade
-          "5" (println "Buying bullet speed") ;; purchase item 5, bullet_speed upgrade
-          "6" (println "Buying vessel size") ;; purchase item 6, vessel_size upgrade
-          " " (println "Going to next level") ;; continue to next level
+          "a" (up_the_stakes state) ;; increase stakes
+          "d" (lower_the_stakes state) ;; decrease stakes
+          "1" (purchase state :fire_spread) ;; purchase item 2, fire_spread upgrade
+          "2" (purchase state :fire_rate) ;; purchase item 1, fire_rate upgrade
+          "3" (purchase state :armor) ;; purchase item 3, armor upgrade
+          "4" (purchase state :bullet_size) ;; purchase item 4, bullet_size upgrade
+          "5" (purchase state :vessel_size) ;; purchase item 6, vessel_size upgrade
+          "6" (purchase state :bullet_speed) ;; purchase item 5, bullet_speed upgrade
+          " " (go_to_next_level) ;; continue to next level
           (println "*whistle*")
         )
       )
     )
     {
-      :level_time_elapsed (:level_time_elapsed state)
+      :level_time_elapsed 0
       :last_spawn (:last_spawn state)
       :frame_count (q/frame-count)
-      :player (:player state)
+      :player new_player
       :enemies [ ]
       :projectiles [ ]
       :images (:images state)
+      :fonts (:fonts state)
     }
+  )
+)
+
+(defn up_the_stakes [state]
+  (println "Upping the stakes, time vs last is" @time_now @time_of_last_bid_change)
+  (if (< 0.25 (- @time_now @time_of_last_bid_change))
+    (let []
+      (swap! time_of_last_bid_change (fn [old] @time_now))
+      (swap! current_bet_bid (fn [old] (clamp (+ old 1) 0 9)))
+      (swap! life_for_player (fn [old] (- 10 @current_bet_bid)))
+    )
+  )
+)
+
+(defn lower_the_stakes [state]
+  (if (< 0.25 (- @time_now @time_of_last_bid_change))
+    (let []
+      (swap! time_of_last_bid_change (fn [old] @time_now))
+      (swap! current_bet_bid (fn [old] (clamp (- old 1) 0 9)))
+      (swap! life_for_player (fn [old] (- 10 @current_bet_bid)))
+    )
+  )
+)
+
+(defn go_to_next_level [state]
+  (swap! prior_bet_bid (fn [old] @current_bet_bid))
+  (swap! life_for_player (fn [old] (- 10 @current_bet_bid)))
+  (swap! current_scene (fn [old] :GAME))
+)
+
+(defn finish_level [state]
+  (println "Finishing level!")
+  (swap! wallet_balance (fn [old] (+ old @current_bet_bid)))
+  (swap! current_scene (fn [old] :INTERSTITIAL))
+)
+
+(defn purchase [state upgrade]
+  (if (and (>= @wallet_balance 5) (< 0.5 (- @time_now @time_of_last_purchase)))
+    (let [new_purchases {
+           :fire_rate (if (= upgrade :fire_rate) (+ 1 (:fire_rate (:purchases (:player state)))) (:fire_rate (:purchases (:player state))))
+           :fire_spread (if (= upgrade :fire_spread) (+ 1 (:fire_spread (:purchases (:player state)))) (:fire_spread (:purchases (:player state))))
+           :armor (if (= upgrade :armor) (+ 1 (:armor (:purchases (:player state)))) (:armor (:purchases (:player state))))
+           :bullet_size (if (= upgrade :bullet_size) (+ 1 (:bullet_size (:purchases (:player state)))) (:bullet_size (:purchases (:player state))))
+           :bullet_speed (if (= upgrade :bullet_speed) (+ 1 (:bullet_speed (:purchases (:player state)))) (:bullet_speed (:purchases (:player state))))
+           :vessel_size (if (= upgrade :vessel_size) (+ 1 (:vessel_size (:purchases (:player state)))) (:vessel_size (:purchases (:player state))))
+           }]
+      (swap! time_of_last_purchase (fn [old] @time_now))
+      (println "Purchasing " upgrade " for 5")
+      (swap! wallet_balance (fn [old] (- old 5)))
+      (swap! purchases (fn [old] new_purchases))
+    )
+    (println "Insufficient vespene gas")
   )
 )
 
 (defn update-state [state]
   (let [dt (/ (- (q/frame-count) (:frame_count state)) (q/target-frame-rate))
         new_time_elapsed (+ dt (:level_time_elapsed state))]
-    (if (> new_time_elapsed 10)
+    (swap! time_now (fn [old] (+ old dt)))
+    (if (> new_time_elapsed 30)
       (let []
-        (swap! current_scene (fn [old] :INTERSTITIAL))
-        (swap! current_level (fn [old] (+ 1 old)))
+        (finish_level state)
       )
-      (println "Time elapsed" new_time_elapsed)
+    )
+    (if (= 0 (:life (:player state)))
+      (swap! current_scene (fn [old]  :OVER))
     )
     (case @current_scene
       :GAME (game_update_draw_state state dt)
       :INTERSTITIAL (interstitial_update_draw_state state dt)
+      :OVER (over_update_draw_state state dt)
       state
     )
   )
 )
 
-(defn draw_player [player]
+(defn draw_player [state player]
   ; Set circle color.
-  (q/fill 0 255 (* 255 (- 1.0 (:invulnerability_timer player))))
+  (q/fill (:color player) 255 (* 255 (- 1.0 (:invulnerability_timer player))))
   ; Calculate x and y coordinates of the circle.
   (let [x (:x_offset player)
         y (:y_offset player)
         life (:life player)
         invuln (:invulnerability_timer player)
         shot_timer (:shot_timer player)
-        r (:radius player) ]
+        r (:player_size player) ]
     ; Move origin point to the top left corner of the sketch.
     (q/text (str "Life: " life) 15 15)
-    (q/text (str "Invuln: " invuln) 15 30)
-    (q/text (str "Shot " shot_timer) 15 60)
+    (q/scale 0.5)
+    (doseq [i (range (- life 1))]
+      (draw-image state :upgradepip [(+ 0 (* i 30)) 0])
+    )
+    (q/scale 2.0)
     (q/with-translation [0 0]
       ; Draw the circle.
-      (q/ellipse x y r r)))
+      (q/ellipse x y r r)
+    ))
 )
 
-(defn draw_enemy [enemy]
+(defn draw_enemy [state enemy]
   (q/fill (:color enemy) 255 255)
   ; Calculate x and y coordinates of the circle.
   (let [y (:y_offset enemy)
@@ -376,12 +532,10 @@
     (q/with-translation [0 0]
       ; Draw the circle.
       (q/ellipse x y r r)
-      (q/fill 0 0 0)
-      (q/text (str (:life enemy)) x y)
       ))
 )
 
-(defn draw_bullet [bullet]
+(defn draw_bullet [state bullet]
   (q/fill (:color bullet) 255 255)
   ; Calculate x and y coordinates of the circle.
   (let [y (:y_offset bullet)
@@ -390,33 +544,34 @@
     ; Move origin point to the center of the sketch.
     (q/with-translation [0 0]
       ; Draw the circle.
-      (q/ellipse x y r r)))
+      (q/ellipse x y r r)
+      ))
 )
 
 (defn draw-state [state]
   (case @current_scene
     :GAME (draw_game_state state)
     :INTERSTITIAL (draw_interstitial_state state)
+    :OVER (draw_game_over state)
     state
   )
 )
 
 (defn draw_game_state [state]
   ; Clear the sketch by filling it with light-grey color.
-  (q/background 0 0 255)
+  (q/background 0 0 0)
   (let [player (:player state)
         enemies (:enemies state)
         projectiles (:projectiles state)
         ]
-    (q/text (str "Bullets: " (count projectiles) ) 15 45)
     ;;Draw Player
-    (draw_player player)
+    (draw_player state player)
     ;;Draw Enemy
     (doseq [enemy enemies]
-      (draw_enemy enemy)
+      (draw_enemy state enemy)
     )
     (doseq [bullet projectiles]
-      (draw_bullet bullet)
+      (draw_bullet state bullet)
     )
   )
 )
@@ -425,36 +580,45 @@
   (q/background 0)
   (q/fill 0 0 255)
   ;;Draw background
-  (draw-image state :test [0 0])
+  (draw-image state :bg [0 0])
   ;;Draw Level Complete
-  (draw_level_complete (:level state))
-  (draw_bet_dialog (:bet state))
-  (draw_money_progress (:prior_balance state) (:prior_bet state))
+  (draw_bet_dialog state)
+  (draw_money_progress state)
   (draw_store state)
   state
 )
 
-(defn draw_level_complete [level]
-  (q/text (str "Level" (- level 1) "Complete!") 200 200)
+(defn draw_game_over [state]
+  (q/background 0)
+  (q/text "You Died!" 250 400)
+  (q/text "Refresh this page to try again!" 100 450)
+  state
 )
 
-(defn draw_bet_dialog []
-  ;; Substitute in bid amount
-  ;; Highlight pips appropriately
-  (q/text (str "Make Your Bet!") 200 300)
-  (q/text (str "\"I can beat the next level with " 6 " life pips\"") 200 330)
+(defn draw_bet_dialog [state ]
+  ;; Show life/money balance
+  (draw-image state (str "bid" @current_bet_bid) [115 360] 0 55)
 )
 
 (defn draw_money_progress []
   ;; Substitute in current_bet and balance info
-  (q/text (str "Bank") 200 400)
-  (q/text (str "Bid") 230 400)
-  (q/text (str "Multiplier") 260 400)
-  (q/text (str "$$$ = " 24 " + (" 5 " x 5) = " 49) 170 425)
+  (draw-text state :earthorbiteracad (str "Balance: $" @wallet_balance) [400 500])
 )
 
 (defn draw_store []
+  ;; Draw rank of what purchase would be
+  (doseq [[i [kind purchase]] (zipmap (range (count @purchases)) @purchases)]
+    (let [ locs {:fire_spread 0 :fire_rate 1 :armor 2 :bullet_size 3 :vessel_size 4 :bullet_speed 5}]
+      (q/text (str (+ 1 purchase)) (+ 80 (* (kind locs) 95)) 600)
+    )
+  )
   ;; Gray-out entries that aren't available
+  (if (< @wallet_balance 5)
+    (let []
+      (q/fill (q/color 0 0 0 100))
+      (q/rect 0 450 600 220)
+    )
+  )
 )
 
 ; this function is called in index.html
@@ -467,7 +631,6 @@
     ; update-state is called on each iteration before draw-state.
     :update update-state
     :draw draw-state
-    :mouse-clicked do_circle
     ; This sketch uses functional-mode middleware.
     ; Check quil wiki for more info about middlewares and particularly
     ; fun-mode.
